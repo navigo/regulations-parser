@@ -40,7 +40,7 @@ def process_xml(notice_xml, cfr_title, cfr_part, version_id):
 @click.argument('cfr_part', type=int)
 @click.argument('version', type=str)
 @click.argument('xml_file_path', type=click.Path(exists=True))
-def import_gpo_cfr(cfr_title, cfr_part, version, xml_file_path):
+def full_issuance(cfr_title, cfr_part, version, xml_file_path):
     """Import the provided XML into a regulation tree, version, and notice."""
     with open(xml_file_path, 'rb') as f:
         notice_xml = NoticeXML(f.read(), xml_file_path)
