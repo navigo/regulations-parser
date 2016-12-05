@@ -3,8 +3,7 @@ import logging
 import click
 
 from regparser.history.versions import Version
-from regparser.index import entry
-from regparser.notice.xml import NoticeXML
+from regparser.index import dependency, entry
 from regparser.tree.xml_parser.reg_text import build_tree
 
 
@@ -23,25 +22,40 @@ def regtext_for_part(notice_xml, cfr_title, cfr_part):
         return matches[0]
 
 
-def process_xml(notice_xml, cfr_title, cfr_part, version_id):
-    """Parse tree from XML and write the relevant index entries"""
-    notice_xml.derive_where_needed()
-    version = Version(identifier=version_id, effective=notice_xml.effective,
-                      published=notice_xml.published)
-    tree = build_tree(regtext_for_part(notice_xml, cfr_title, cfr_part))
+def process_version_if_needed(cfr_title, cfr_part, version_id):
+    notice_entry = entry.Notice(version_id)
+    version_entry = entry.Version(cfr_title, cfr_part, version_id)
 
-    entry.FinalVersion(cfr_title, cfr_part, version_id).write(version)
-    entry.Tree(cfr_title, cfr_part, version_id).write(tree)
-    entry.Notice(version_id).write(notice_xml)
+    deps = dependency.Graph()
+    deps.add(version_entry, notice_entry)
+    deps.validate_for(version_entry)
+
+    if deps.is_stale(version_entry):
+        notice_xml = notice_entry.read()
+        version = Version(
+            identifier=version_id, effective=notice_xml.effective,
+            published=notice_xml.published)
+        version_entry.write(version)
+
+
+def process_tree_if_needed(cfr_title, cfr_part, version_id):
+    notice_entry = entry.Notice(version_id)
+    tree_entry = entry.Tree(cfr_title, cfr_part, version_id)
+
+    deps = dependency.Graph()
+    deps.add(tree_entry, notice_entry)
+    deps.validate_for(tree_entry)
+    if deps.is_stale(tree_entry):
+        notice_xml = notice_entry.read()
+        tree = build_tree(regtext_for_part(notice_xml, cfr_title, cfr_part))
+        tree_entry.write(tree)
 
 
 @click.command()
 @click.argument('cfr_title', type=int)
 @click.argument('cfr_part', type=int)
 @click.argument('version', type=str)
-@click.argument('xml_file_path', type=click.Path(exists=True))
-def full_issuance(cfr_title, cfr_part, version, xml_file_path):
-    """Import the provided XML into a regulation tree, version, and notice."""
-    with open(xml_file_path, 'rb') as f:
-        notice_xml = NoticeXML(f.read(), xml_file_path)
-    process_xml(notice_xml, cfr_title, cfr_part, version)
+def full_issuance(cfr_title, cfr_part, version):
+    """Create a full regulation tree from a notice"""
+    process_version_if_needed(cfr_title, cfr_part, version)
+    process_tree_if_needed(cfr_title, cfr_part, version)
