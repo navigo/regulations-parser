@@ -32,20 +32,22 @@ def get_reg_part(reg_doc):
     potential_parts = []
     potential_parts.extend(
         # FR notice
-        node.attrib['PART'] for node in reg_doc.xpath('//REGTEXT'))
+        node.attrib['PART']
+        for node in reg_doc.xpath('self::REGTEXT|.//REGTEXT'))
     potential_parts.extend(
         # e-CFR XML, under PART/EAR
         node.text.replace('Pt.', '').strip()
-        for node in reg_doc.xpath('//PART/EAR')
+        for node in reg_doc.xpath('self::PART/EAR|.//PART/EAR')
         if 'Pt.' in node.text)
     potential_parts.extend(
         # e-CFR XML, under FDSYS/HEADING
         node.text.replace('PART', '').strip()
-        for node in reg_doc.xpath('//FDSYS/HEADING')
+        for node in reg_doc.xpath('self::FDSYS/HEADING|.//FDSYS/HEADING')
         if 'PART' in node.text)
     potential_parts.extend(
         # e-CFR XML, under FDSYS/GRANULENUM
-        node.text.strip() for node in reg_doc.xpath('//FDSYS/GRANULENUM'))
+        node.text.strip() for node in reg_doc.xpath(
+            'self::FDSYS/GRANULENUM|.//FDSYS/GRANULENUM'))
     potential_parts = [p for p in potential_parts if p.strip()]
 
     if potential_parts:
@@ -54,7 +56,7 @@ def get_reg_part(reg_doc):
 
 def get_title(reg_doc):
     """ Extract the title of the regulation. """
-    parent = reg_doc.xpath('//PART/HD')[0]
+    parent = reg_doc.xpath('.//PART/HD')[0]
     title = parent.text
     return title
 
@@ -83,7 +85,7 @@ def build_tree(reg_xml):
 
     tree = Node("", [], [reg_part], title)
 
-    part = reg_xml.xpath('//PART')[0]
+    part = reg_xml.xpath('.//PART')[0]
 
     # Build a list of SUBPARTs, then pull SUBJGRPs into that list:
     subpart_and_subjgrp_xmls = []
