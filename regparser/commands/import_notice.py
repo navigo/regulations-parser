@@ -17,7 +17,7 @@ def parse_notice(xml_file_path):
     if has_requirements(notice_xml):
         notice_xml.derive_where_needed()
 
-    return notice_xml
+        return notice_xml
 
 
 def has_requirements(notice_xml):

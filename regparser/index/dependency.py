@@ -110,8 +110,7 @@ class Graph(object):
         logger.debug("Validating dependencies for %r", key)
         for dependency in self.dependencies(key):
             if self.node(dependency).get('stale'):
-                pass
-                # raise Missing(key, self.node(dependency)['stale'])
+                raise Missing(key, self.node(dependency)['stale'])
 
     def is_stale(self, entry):
         """Determine if a file needs to be rebuilt"""
