@@ -193,7 +193,7 @@ def create_field_amendment(label, amendment):
     return nodes
 
 
-def create_add_amendment(amendment):
+def create_add_amendment(amendment, subpart_label=None):
     """ An amendment comes in with a whole tree structure. We break apart the
     tree here (this is what flatten does), convert the Node objects to JSON
     representations. This ensures that each amendment only acts on one node.
@@ -204,8 +204,11 @@ def create_add_amendment(amendment):
     flatten_tree(nodes_list, amendment['node'])
     changes = []
     for node in nodes_list:
-        if node.label == amendment['node'].label:   # is root
-            parent_label = amendment.get('parent_label')
+        is_root = node.label == amendment['node'].label
+        if is_root:
+            parent_label = amendment.get('parent_label') or subpart_label
+        elif len(node.label) == 2:
+            parent_label = subpart_label
         else:
             parent_label = None
         changes.append(format_node(node, amendment, parent_label))
@@ -249,9 +252,8 @@ def create_subpart_amendment(subpart_node):
     amendment = {
         'node': subpart_node,
         'action': 'POST',
-        'extras': {'parent_label': subpart_node.label}
     }
-    return create_add_amendment(amendment)
+    return create_add_amendment(amendment, subpart_node.label)
 
 
 def flatten_tree(node_list, node):
