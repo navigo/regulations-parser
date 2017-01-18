@@ -430,3 +430,17 @@ class ImportCategories(PreProcessorBase):
                 next_el = iterator.getnext()
                 category_el.append(iterator)
                 iterator = next_el
+
+
+class MoveSubpart(PreProcessorBase):
+    """Account for SUBPART tags being outside their intended CONTENTS"""
+    def transform(self, xml):
+        for subpart in xml.xpath('//SUBPART'):
+            following = subpart.getnext()
+            if following is not None and following.tag == 'CONTENTS':
+                for content_child in following:
+                    if content_child.tag != 'SUBPART':
+                        subpart.append(content_child)
+                    else:
+                        break
+                following.insert(0, subpart)
