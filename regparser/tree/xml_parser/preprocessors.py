@@ -420,3 +420,17 @@ def promote_nested_tags(tag, xml):
 
 promote_nested_subjgrp = functools.partial(promote_nested_tags, 'SUBJGRP')
 promote_nested_appendix = functools.partial(promote_nested_tags, 'APPENDIX')
+
+
+class MoveSubpart(PreProcessorBase):
+    """Account for SUBPART tags being outside their intended CONTENTS"""
+    def transform(self, xml):
+        for subpart in xml.xpath('//SUBPART'):
+            following = subpart.getnext()
+            if following is not None and following.tag == 'CONTENTS':
+                for content_child in following:
+                    if content_child.tag != 'SUBPART':
+                        subpart.append(content_child)
+                    else:
+                        break
+                following.insert(0, subpart)

@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 def regtext_for_part(notice_xml, cfr_title, cfr_part):
     """Filter to only the REGTEXT in question"""
-    xpath = './/REGTEXT[@TITLE="{0}" and @PART="{1}"]'.format(
-        cfr_title, cfr_part)
+    xpath = './/REGTEXT[@TITLE={} and @PART={}]'.format(cfr_title, cfr_part)
     matches = notice_xml.xpath(xpath)
     if not matches:
         logger.warning('No matching REGTEXT in this file')
@@ -36,7 +35,7 @@ def process_version_if_needed(cfr_title, cfr_part, version_id):
         notice_xml = notice_entry.read()
         version = Version(
             identifier=version_id, effective=notice_xml.effective,
-            published=notice_xml.published)
+            published=notice_xml.published, volume=notice_xml.fr_volume, page=notice_xml.start_page)
         version_entry.write(version)
 
 

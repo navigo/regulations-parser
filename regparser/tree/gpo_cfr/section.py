@@ -3,13 +3,11 @@ import re
 
 import pyparsing
 import six
-
 from regparser.citations import remove_citation_overlaps
 from regparser.grammar import unified
 from regparser.grammar.utils import QuickSearchable
 from regparser.tree.depth import markers as mtypes
 from regparser.tree.depth import optional_rules
-from regparser.tree.paragraph import p_level_of, p_levels
 from regparser.tree.reg_text import build_empty_part
 from regparser.tree.struct import Node
 from regparser.tree.xml_parser import (flatsubtree_processor, import_category,
@@ -51,7 +49,7 @@ def get_markers(text, following_marker=None):
     else:
         collapsed = collapsed_markers(text)
 
-    #   Check that the collapsed markers make sense:
+    # Check that the collapsed markers make sense:
     #   * at least one level below the initial marker
     #   * followed by a marker in sequence
     if initial and collapsed:
@@ -123,10 +121,10 @@ def build_from_section(reg_part, section_xml):
             secnum_candidate = int(secnum_candidate)
         section_nums.append(secnum_candidate)
 
-    #  Merge spans longer than 3 sections
+    # Merge spans longer than 3 sections
     section_span_end = None
     if (len(section_nums) == 2 and section_no[:2] == u'§§'
-            and '-' in section_no):
+        and '-' in section_no):
         first, last = section_nums
         if last - first + 1 > 3:
             section_span_end = str(last)
@@ -192,13 +190,14 @@ def split_by_markers(xml):
     node_texts = tree_utils.split_text(plain_text, plain_markers)
     tagged_texts = tree_utils.split_text(
         tagged_text, ['({0})'.format(m) for m in markers_list])
-    if len(node_texts) > len(markers_list):     # due to initial MARKERLESS
+    if len(node_texts) > len(markers_list):  # due to initial MARKERLESS
         markers_list.insert(0, mtypes.MARKERLESS)
     return list(zip(markers_list, node_texts, tagged_texts))
 
 
 class ParagraphMatcher(paragraph_processor.BaseMatcher):
     """<P>/<FP> with or without initial paragraph markers -- (a)(1)(i) etc."""
+
     def matches(self, xml):
         return xml.tag in ('P', 'FP')
 
@@ -211,7 +210,7 @@ class ParagraphMatcher(paragraph_processor.BaseMatcher):
                 tagged_text=six.text_type(tagged_text.strip())
             ))
 
-        if plain_text.endswith('* * *'):    # last in loop
+        if plain_text.endswith('* * *'):  # last in loop
             nodes.append(Node(label=[mtypes.INLINE_STARS]))
         return nodes
 
@@ -234,10 +233,10 @@ class RegtextParagraphProcessor(paragraph_processor.ParagraphProcessor):
 
     def additional_constraints(self):
         return [
-            optional_rules.depth_type_inverses,
-            optional_rules.limit_sequence_gap(3),
-            optional_rules.stars_occupy_space,
-        ] + self.relaxed_constraints()
+                   optional_rules.depth_type_inverses,
+                   optional_rules.limit_sequence_gap(3),
+                   optional_rules.stars_occupy_space,
+               ] + self.relaxed_constraints()
 
     def relaxed_constraints(self):
         return [optional_rules.star_new_level,
@@ -251,6 +250,7 @@ class RegtextParagraphProcessor(paragraph_processor.ParagraphProcessor):
 class ParseEmptyPart(matchers.Parser):
     """Create an EmptyPart (a subpart with no name) if we encounter a SECTION
     at the top level"""
+
     def matches(self, parent, xml_node):
         return xml_node.tag == 'SECTION' and len(parent.label) == 1
 
