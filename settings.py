@@ -118,6 +118,7 @@ PREPROCESSORS = plugins.extend_list('eregs_ns.parser.preprocessors', [
     "regparser.tree.xml_parser.preprocessors.AtfI50032",
     "regparser.tree.xml_parser.preprocessors.AtfI50031",
     "regparser.tree.xml_parser.preprocessors.ImportCategories",
+    "regparser.tree.xml_parser.preprocessors.MoveSubpart",
 ])
 
 # Which layers are to be generated, keyed by document type. The ALL key is
