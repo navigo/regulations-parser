@@ -1,15 +1,15 @@
-from datetime import date
 import json
+from datetime import date
 from random import randint
 from unittest import TestCase
 
+import pytest
 from click.testing import CliRunner
 from mock import patch
-import pytest
 
 from regparser.commands import current_version
-from regparser.index import entry
 from regparser.history.annual import Volume
+from regparser.index import entry
 from regparser.notice.xml import TitlePartsRef
 
 
@@ -20,16 +20,16 @@ class CommandsCurrentVersionTests(TestCase):
         self.part = randint(1, 999)
         self.year = randint(2000, 2020)
         self.volume = Volume(self.year, self.title, 1)
-        self.version_id = '{}-annual-{}'.format(self.year, self.part)
+        self.version_id = '{0}-annual-{1}'.format(self.year, self.part)
 
     def test_process_creation(self):
         """If no tree is present, we should build one"""
-        to_patch = 'regparser.commands.current_version.xml_parser'
-        with CliRunner().isolated_filesystem(), patch(to_patch) as xml_parser:
+        to_patch = 'regparser.commands.current_version.builder'
+        with CliRunner().isolated_filesystem(), patch(to_patch) as builder:
             entry.Entry('annual', self.title, self.part, self.year).write(
                 b'<ROOT />')
 
-            xml_parser.reg_text.build_tree.return_value = {'my': 'tree'}
+            builder.build_tree.return_value = {'my': 'tree'}
             current_version.process_if_needed(self.volume, self.part)
             tree = entry.Entry('tree', self.title, self.part,
                                self.version_id).read()

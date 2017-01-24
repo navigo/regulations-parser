@@ -4,7 +4,7 @@ from regparser import federalregister
 from regparser.commands.dependency_resolver import DependencyResolver
 from regparser.index import entry
 from regparser.notice.build import split_doc_num
-from regparser.notice.xml import notice_xmls_for_url, TitlePartsRef
+from regparser.notice.xml import TitlePartsRef, notice_xmls_for_url
 
 
 def convert_cfr_refs(refs=None):
@@ -50,16 +50,20 @@ def preprocess_notice(document_number):
             "effective_on",
             "cfr_references",
             "comments_close_on",
+            "end_page",
             "full_text_xml_url",
             "html_url",
             "publication_date",
             "regulation_id_numbers",
+            "start_page",
             "volume"
         ])
     notice_xmls = list(notice_xmls_for_url(meta['full_text_xml_url']))
     for notice_xml in notice_xmls:
         notice_xml.published = meta['publication_date']
         notice_xml.fr_volume = meta['volume']
+        notice_xml.start_page = meta['start_page']
+        notice_xml.end_page = meta['end_page']
         if meta.get('html_url'):
             notice_xml.fr_html_url = meta['html_url']
         if meta.get("comments_close_on"):

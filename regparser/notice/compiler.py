@@ -1,18 +1,17 @@
 """ Notices indicate how a regulation has changed since the last version. This
 module contains code to compile a regulation from a notice's changes. """
 
-from bisect import bisect
-from collections import defaultdict
 import copy
 import logging
 import re
+from bisect import bisect
+from collections import defaultdict
 
 from roman import fromRoman
 
 from regparser.grammar.tokens import Verb
+from regparser.layer.paragraph_markers import marker_of
 from regparser.tree.struct import Node, find, find_parent
-from regparser.tree.xml_parser import interpretations, reg_text
-
 
 logger = logging.getLogger(__name__)
 
@@ -82,25 +81,20 @@ def node_text_equality(left, right):
         left and right and
         left.text == right.text and
         left.title == right.title and
-        getattr(left, 'tagged_text', '') == getattr(right, 'tagged_text', '')
+        left.tagged_text == right.tagged_text
     )
 
 
 def overwrite_marker(origin, new_label):
     """ The node passed in has a label, but we're going to give it a
     new one (new_label). This is necessary during node moves.  """
-
-    if origin.node_type == Node.REGTEXT:
-        marker_list = reg_text.initial_markers(origin.text)
-        if len(marker_list) > 0:
-            marker = '(%s)' % marker_list[0]
-            new_marker = '(%s)' % new_label
-            origin.text = origin.text.replace(marker, new_marker, 1)
-    elif origin.node_type == Node.INTERP:
-        marker = interpretations.get_first_interp_marker(origin.text)
-        marker = marker + '.'
-        new_marker = new_label + '.'
-        origin.text = origin.text.replace(marker, new_marker, 1)
+    marker = marker_of(origin)
+    if '(' in marker:
+        origin.text = origin.text.replace(marker, '({0})'.format(new_label), 1)
+    elif marker:
+        origin.text = origin.text.replace(marker, '{0}.'.format(new_label), 1)
+    else:
+        logger.warning("Cannot replace marker in %s", origin.text)
 
     return origin
 
@@ -169,7 +163,7 @@ class RegulationTree(object):
             order = []
 
         children = children + [node]    # non-destructive
-        child_labels = set(c.label_id() for c in children)
+        child_labels = {c.label_id() for c in children}
 
         if child_labels.issubset(set(order)):
             lookup = {c.label_id(): c for c in children}
@@ -303,8 +297,7 @@ class RegulationTree(object):
         elif existing and is_interp_placeholder(existing):
             existing.title = node.title
             existing.text = node.text
-            if hasattr(node, 'tagged_text'):
-                existing.tagged_text = node.tagged_text
+            existing.tagged_text = node.tagged_text
         # Proceed only if we're not re-adding an existing node (common in our
         # messy data)
         elif not node_text_equality(existing, node):
@@ -362,7 +355,7 @@ class RegulationTree(object):
         node = find(self.tree, label)
         node.text = replace_first_sentence(node.text, change['node']['text'])
 
-        if hasattr(node, 'tagged_text') and 'tagged_text' in change['node']:
+        if node.tagged_text and 'tagged_text' in change['node']:
             node.tagged_text = replace_first_sentence(
                 node.tagged_text, change['node']['tagged_text'])
 

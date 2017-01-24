@@ -1,11 +1,10 @@
-# vim: set encoding=utf-8
+# -*- coding: utf-8 -*-
 """Some common combinations"""
-from pyparsing import (
-    FollowedBy, LineEnd, Literal, OneOrMore, Optional, Suppress, SkipTo,
-    ZeroOrMore)
+from pyparsing import (FollowedBy, LineEnd, Literal, OneOrMore, Optional,
+                       SkipTo, Suppress, ZeroOrMore)
 
 from regparser.grammar import atomic
-from regparser.grammar.utils import keep_pos, Marker, QuickSearchable
+from regparser.grammar.utils import Marker, QuickSearchable, keep_pos
 
 period_section = Suppress(".") + atomic.section
 part_section = atomic.part + period_section
@@ -63,13 +62,16 @@ def appendix_section(match):
     else:
         return None
 
+
 appendix_with_section = QuickSearchable(
     atomic.appendix +
     '-' +
     (atomic.appendix_digit +
      ZeroOrMore(atomic.lower_p | atomic.roman_p | atomic.digit_p |
                 atomic.upper_p)).setParseAction(
-                    appendix_section).setResultsName("appendix_section"))
+                    appendix_section).setResultsName("appendix_section"),
+    # optimization: encode the regex
+    force_regex_str=r"[A-Z]+[0-9]*\b\s*-")
 
 appendix_with_part = QuickSearchable(
     keep_pos(atomic.appendix_marker).setResultsName("marker") +
@@ -119,6 +121,7 @@ def make_multiple(head, tail=None, wrap_tail=False):
     if wrap_tail:
         tail = Optional(Suppress('(')) + tail + Optional(Suppress(')'))
     return QuickSearchable(head + OneOrMore(tail))
+
 
 _inner_non_comment = (
     any_depth_p |

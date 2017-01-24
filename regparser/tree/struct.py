@@ -1,9 +1,9 @@
+import hashlib
 import re
 from json import JSONEncoder
-import hashlib
 
-from lxml import etree
 import six
+from lxml import etree
 
 from regparser.tree.depth.markers import MARKERLESS
 
@@ -22,7 +22,7 @@ class Node(object):
     MARKERLESS_REGEX = re.compile(r'p\d+')
 
     def __init__(self, text='', children=None, label=None, title=None,
-                 node_type=REGTEXT, source_xml=None, tagged_text=None):
+                 node_type=REGTEXT, source_xml=None, tagged_text=''):
         if children is None:
             children = []
         if label is None:
@@ -38,14 +38,11 @@ class Node(object):
         self.title = title or None
         self.node_type = node_type
         self.source_xml = source_xml
-        if tagged_text is not None:
-            # Note that parts of the parser use the presence/absence of this
-            # attribute (rather than its value) as an indicator. When that's
-            # no longer the case, we can remove the `if` here
-            self.tagged_text = tagged_text
+        self.tagged_text = tagged_text
 
     def __repr__(self):
-        text = "Node(text={}, children={}, label={}, title={}, node_type={})"
+        text = ("Node(text={0}, children={1}, label={2}, title={3}, "
+                "node_type={4})")
         return text.format(
             repr(self.text), repr(self.children), repr(self.label),
             repr(self.title), repr(self.node_type)
@@ -56,6 +53,11 @@ class Node(object):
 
     def __eq__(self, other):
         return repr(self) == repr(other)
+
+    @property
+    def cfr_part(self):
+        if self.label:
+            return self.label[0]
 
     def label_id(self):
         return '-'.join(self.label)
@@ -111,8 +113,8 @@ class NodeEncoder(JSONEncoder):
 
 class FullNodeEncoder(JSONEncoder):
     """Encodes Nodes into JSON, not losing any of the fields"""
-    FIELDS = set(['text', 'children', 'label', 'title', 'node_type',
-                  'source_xml', 'tagged_text'])
+    FIELDS = {'text', 'children', 'label', 'title', 'node_type', 'source_xml',
+              'tagged_text'}
 
     def default(self, obj):
         if isinstance(obj, Node):
@@ -128,10 +130,7 @@ def full_node_decode_hook(d):
     """Convert a JSON object into a full Node"""
     if set(d.keys()) == FullNodeEncoder.FIELDS:
         params = dict(d)
-        del params['tagged_text']   # Ugly, but this field is set separately
         node = Node(**params)
-        if d['tagged_text']:
-            node.tagged_text = d['tagged_text']
         if node.source_xml:
             node.source_xml = etree.fromstring(node.source_xml)
         return node
@@ -336,7 +335,7 @@ class FrozenNode(object):
         children = [FrozenNode.from_node(n) for n in node.children]
         fresh = FrozenNode(text=node.text, children=children, label=node.label,
                            title=node.title or '', node_type=node.node_type,
-                           tagged_text=getattr(node, 'tagged_text', '') or '')
+                           tagged_text=node.tagged_text)
         return fresh.prototype()
 
     # @todo - seems like something we could implement via __new__?

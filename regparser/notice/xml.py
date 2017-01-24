@@ -1,24 +1,23 @@
 """Functions for processing the xml associated with the Federal Register's
 notices"""
-from collections import namedtuple
-from datetime import date, datetime
 import logging
 import os
+from collections import namedtuple
+from datetime import date, datetime
 
+import requests
 from cached_property import cached_property
 from lxml import etree
-import requests
 from six.moves.urllib.parse import urlparse
 
-
+import settings
 from regparser import regs_gov
 from regparser.grammar.unified import notice_cfr_p
 from regparser.history.delays import delays_in_sentence
 from regparser.index.http_cache import http_client
-from regparser.notice.amendments import fetch_amendments
+from regparser.notice.amendments.fetch import fetch_amendments
 from regparser.notice.dates import fetch_dates
 from regparser.tree.xml_parser.xml_wrapper import XMLWrapper
-import settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +49,14 @@ def add_children(el, children):
     return el
 
 
-def _root_property(attrib):
-    """We add multiple attributes to the NoticeXML's root element"""
+def _root_property(attrib, transform=None):
+    """We add multiple attributes to the NoticeXML's root element. Account for
+    data transforms (e.g. to an integer)"""
     def getter(self):
-        return self.xml.attrib.get(attrib)
+        value = self.xml.attrib.get(attrib)
+        if transform and value is not None:
+            return transform(value)
+        return value
 
     def setter(self, value):
         self.xml.attrib[attrib] = str(value)
@@ -79,7 +82,7 @@ class NoticeXML(XMLWrapper):
             value = value.isoformat()
         if value is None:
             value = ''
-        dates_tag.attrib["eregs-{}-date".format(date_type)] = value
+        dates_tag.attrib["eregs-{0}-date".format(date_type)] = value
 
     def derive_rins(self):
         """Extract regulatory id numbers from the XML (in the RINs tag)"""
@@ -189,7 +192,7 @@ class NoticeXML(XMLWrapper):
     def _get_date_attr(self, date_type):
         """Pulls out the date set in `set_date_attr`, as a datetime.date. If
         not present, returns None"""
-        value = self.xpath(".//DATES")[0].get('eregs-{}-date'.format(
+        value = self.xpath(".//DATES")[0].get('eregs-{0}-date'.format(
             date_type))
         if value:
             return datetime.strptime(value, "%Y-%m-%d").date()
@@ -330,32 +333,13 @@ class NoticeXML(XMLWrapper):
     def published(self, value):
         self._set_date_attr('published', value)
 
-    @property
-    def fr_volume(self):
-        value = self.xpath(".//PRTPAGE")[0].attrib.get('eregs-fr-volume')
-        if value:
-            return int(value)
-
-    @fr_volume.setter
-    def fr_volume(self, value):
-        for prtpage in self.xpath(".//PRTPAGE"):
-            prtpage.attrib['eregs-fr-volume'] = str(value)
-
-    @property
-    def start_page(self):
-        return int(self.xpath(".//PRTPAGE")[0].attrib["P"]) - 1
-
-    @property
-    def end_page(self):
-        return int(self.xpath(".//PRTPAGE")[-1].attrib["P"])
-
     @cached_property        # rather expensive operation, so cache results
     def amendments(self):
         return fetch_amendments(self.xml)
 
     @property
     def fr_citation(self):
-        return '{} FR {}'.format(self.fr_volume, self.start_page)
+        return '{0} FR {1}'.format(self.fr_volume, self.start_page)
 
     @property
     def title(self):
@@ -399,6 +383,9 @@ class NoticeXML(XMLWrapper):
     fr_html_url = _root_property('fr-html-url')
     comment_doc_id = _root_property('eregs-comment-doc-id')
     primary_docket = _root_property('eregs-primary-docket')
+    fr_volume = _root_property('fr-volume', int)
+    start_page = _root_property('fr-start-page', int)
+    end_page = _root_property('fr-end-page', int)
 
     def as_dict(self):
         """We use JSON to represent notices in the API. This converts the

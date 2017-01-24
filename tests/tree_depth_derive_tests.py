@@ -13,7 +13,7 @@ class DeriveTests(TestCase):
 
     def assert_depth_match_extra(self, markers, extra, *depths_set):
         """Verify that the set of markers resolves to the provided set of
-        depths (in any order). Allows extra contraints."""
+        depths (in any order). Allows extra constraints."""
         solutions = derive_depths(markers, extra)
         results = {tuple(a.depth for a in s) for s in solutions}
         six.assertCountEqual(self, results, {tuple(s) for s in depths_set})
@@ -71,14 +71,28 @@ class DeriveTests(TestCase):
 
     def test_ambiguous_stars(self):
         self.assert_depth_match(['A', '1', 'a', STARS_TAG, 'B'],
+                                [0, 1, 2, 0, 0],
                                 [0, 1, 2, 2, 0],
                                 [0, 1, 2, 3, 3])
+        self.assert_depth_match_extra(['A', '1', 'a', STARS_TAG, 'B'],
+                                      [optional_rules.stars_occupy_space],
+                                      [0, 1, 2, 2, 0],
+                                      [0, 1, 2, 3, 3])
 
     def test_double_stars(self):
         self.assert_depth_match(['A', '1', 'a', STARS_TAG, STARS_TAG, 'B'],
+                                [0, 1, 2, 1, 0, 0],
+                                [0, 1, 2, 2, 0, 0],
                                 [0, 1, 2, 2, 1, 0],
+                                [0, 1, 2, 3, 0, 0],
                                 [0, 1, 2, 3, 2, 0],
                                 [0, 1, 2, 3, 1, 0])
+        self.assert_depth_match_extra(
+            ['A', '1', 'a', STARS_TAG, STARS_TAG, 'B'],
+            [optional_rules.stars_occupy_space],
+            [0, 1, 2, 2, 1, 0],
+            [0, 1, 2, 3, 2, 0],
+            [0, 1, 2, 3, 1, 0])
 
     def test_alpha_roman_ambiguous(self):
         self.assert_depth_match_extra(
@@ -100,7 +114,11 @@ class DeriveTests(TestCase):
 
     def test_inline_star(self):
         self.assert_depth_match(['1', STARS_TAG, '2'],
+                                [0, 0, 0],
                                 [0, 1, 0])
+        self.assert_depth_match_extra(['1', STARS_TAG, '2'],
+                                      [optional_rules.stars_occupy_space],
+                                      [0, 1, 0])
 
         self.assert_depth_match(['1', INLINE_STARS, '2'],
                                 [0, 1, 0])
@@ -182,14 +200,23 @@ class DeriveTests(TestCase):
             ['a', STARS_TAG, 'i'],
             [0, 0, 0],
             [0, 0, 1],
-            [0, 1, 0]
+            [0, 1, 0],
+            [0, 1, 1]
         )
 
         self.assert_depth_match_extra(
             ['a', STARS_TAG, 'i'],
             [optional_rules.star_new_level],
             [0, 0, 0],
-            [0, 1, 0]
+            [0, 1, 0],
+            [0, 1, 1]
+        )
+
+        self.assert_depth_match_extra(
+            ['a', STARS_TAG, 'i'],
+            [optional_rules.star_new_level, optional_rules.stars_occupy_space],
+            [0, 0, 0],
+            [0, 1, 0],
         )
 
     def test_marker_stars_markerless_symmetry(self):

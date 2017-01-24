@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
+
 import re
 
 from regparser.layer.layer import Layer
 from regparser.layer.paragraph_markers import marker_of
 from regparser.layer.terms import Terms
-
 
 KEYTERM_RE = re.compile(r'<E T="03">(?P<keyterm>[^<]*?)</E>', re.UNICODE)
 TRIM_FROM_KEYTERM = ['See also', 'See']
@@ -32,8 +32,7 @@ class KeyTerms(Layer):
 
     @classmethod
     def keyterm_in_node(cls, node, ignore_definitions=True):
-        tagged = (getattr(node, 'tagged_text', None) or '')
-        tagged = tagged.replace(marker_of(node), '', 1).strip()
+        tagged = node.tagged_text.replace(marker_of(node), '', 1).strip()
         keyterm = keyterm_in_text(tagged)
 
         if keyterm and not (ignore_definitions and

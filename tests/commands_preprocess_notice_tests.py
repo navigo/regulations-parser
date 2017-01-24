@@ -1,14 +1,14 @@
-from datetime import date
 import re
+from datetime import date
 from unittest import TestCase
 
+import pytest
 from click.testing import CliRunner
 from lxml import etree
 from mock import patch
-import pytest
 
-from regparser.commands.preprocess_notice import (
-    convert_cfr_refs, preprocess_notice)
+from regparser.commands.preprocess_notice import (convert_cfr_refs,
+                                                  preprocess_notice)
 from regparser.index import dependency, entry
 from regparser.notice.xml import NoticeXML, TitlePartsRef
 from regparser.test_utils.http_mixin import HttpMixin
@@ -31,7 +31,9 @@ class CommandsPreprocessNoticeTests(HttpMixin, TestCase):
         params = {'effective_on': '2008-08-08',
                   'publication_date': '2007-07-07',
                   'full_text_xml_url': 'some://url',
-                  'volume': 45}
+                  'volume': 45,
+                  'start_page': 111,
+                  'end_page': 222}
         params.update(kwargs)
         self.expect_json_http(params, uri=re.compile('.*federalregister.*'))
         # No data from regs.gov
@@ -111,10 +113,10 @@ class CommandsPreprocessNoticeTests(HttpMixin, TestCase):
             u'name': u'Environmental Protection Agency',
             u'parent_id': None,
             u'raw_name': u'ENVIRONMENTAL PROTECTION AGENCY',
-            u'url': u'%s%s' % (u'https://www.federalregister.gov/',
-                               u'agencies/environmental-protection-agency'),
-            u'json_url': u'%s%s' % (u'https://www.federalregister.gov/',
-                                    u'api/v1/agencies/145.json'),
+            u'url': ('https://www.federalregister.gov/agencies/'
+                     'environmental-protection-agency'),
+            u'json_url': ('https://www.federalregister.gov/api/v1/agencies/'
+                          '145.json'),
             u'id': 145
         }]
         self.expect_common_json(agencies=agencies_info)

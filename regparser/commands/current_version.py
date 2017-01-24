@@ -7,10 +7,9 @@ from regparser.history.annual import find_volume
 from regparser.history.versions import Version
 from regparser.index import dependency, entry
 from regparser.notice.fake import build as build_fake_notice
-from regparser.tree import xml_parser
+from regparser.tree.gpo_cfr import builder
 
-
-_version_id = '{}-annual-{}'.format
+_version_id = '{0}-annual-{1}'.format
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +25,7 @@ def process_if_needed(volume, cfr_part):
     deps.add(tree_entry, annual_entry)
     deps.validate_for(tree_entry)
     if deps.is_stale(tree_entry):
-        tree = xml_parser.reg_text.build_tree(annual_entry.read().xml)
+        tree = builder.build_tree(annual_entry.read().xml)
         tree_entry.write(tree)
         notice_entry.write(build_fake_notice(
             version_id, volume.publication_date, volume.title, cfr_part))
