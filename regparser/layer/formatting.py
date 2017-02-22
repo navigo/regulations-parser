@@ -139,9 +139,10 @@ def table_xml_to_data(xml_node):
     header = [[] for _ in range(header_root.height())]
 
     def per_node(node):
-        header[node.level].append({'text': node.text,
-                                   'colspan': node.colspan,
-                                   'rowspan': node.rowspan})
+        if node and node.level and len(header) < node.level:
+            header[node.level].append({'text': node.text,
+                                       'colspan': node.colspan,
+                                       'rowspan': node.rowspan})
     struct.walk(header_root, per_node)
     header = header[1:]     # skip the root
 

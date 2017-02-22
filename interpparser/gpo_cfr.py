@@ -313,4 +313,4 @@ def get_app_title(node):
     if titles:
         return titles[0].text
     else:
-        return node.xpath("./RESERVED")[0]
+        return next(iter(node.xpath("./RESERVED") or []), "")

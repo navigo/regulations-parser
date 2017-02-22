@@ -5,6 +5,10 @@ from regparser.tree.struct import Node
 
 _marker_re = r'([0-9]+|[a-z]+|[A-Z]+)'
 
+import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 def marker_of(node):
     """Try multiple potential marker formats. See if any apply to this
@@ -21,11 +25,15 @@ def marker_of(node):
     # another marker, ignoring whitespace
     regex = r'{0}(\s*-\s*{1})?'.format(regex_fmt.format(relevant[-1]),
                                        regex_fmt.format(_marker_re))
-    match = re.match(regex, text)
-    if match:
-        return text[:match.end()]
-    else:
-        return ''
+    try:
+        match = re.match(regex, text)
+        if match:
+            return text[:match.end()]
+        else:
+            return ''
+    except:
+        logger.error(sys.exc_info()[0])
+
 
 
 class ParagraphMarkers(Layer):

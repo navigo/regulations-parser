@@ -61,7 +61,10 @@ class ParagraphProcessor(object):
         for fn, weight in self.DEPTH_HEURISTICS.items():
             depths = fn(depths, weight)
         depths = sorted(depths, key=lambda d: d.weight, reverse=True)
-        return depths[0]
+        if depths:
+            return depths[0]
+        else:
+            return []
 
     def build_hierarchy(self, root, nodes, depths):
         """Given a root node, a flat list of child nodes, and a list of

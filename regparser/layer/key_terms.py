@@ -32,12 +32,13 @@ class KeyTerms(Layer):
 
     @classmethod
     def keyterm_in_node(cls, node, ignore_definitions=True):
-        tagged = node.tagged_text.replace(marker_of(node), '', 1).strip()
-        keyterm = keyterm_in_text(tagged)
+        if node and node.tagged_text:
+            tagged = node.tagged_text.replace(marker_of(node), '', 1).strip()
+            keyterm = keyterm_in_text(tagged)
 
-        if keyterm and not (ignore_definitions and
-                            cls.is_definition(node, keyterm)):
-            return keyterm
+            if keyterm and not (ignore_definitions and
+                                cls.is_definition(node, keyterm)):
+                return keyterm
 
     @staticmethod
     def is_definition(node, keyterm):

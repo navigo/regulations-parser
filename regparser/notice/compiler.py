@@ -200,8 +200,9 @@ class RegulationTree(object):
         tree. """
 
         parent = self.get_parent(node)
-        other_children = [c for c in parent.children if c.label != node.label]
-        parent.children = other_children
+        if parent:
+            other_children = [c for c in parent.children if c.label != node.label]
+            parent.children = other_children
 
     def delete(self, label_id):
         """ Delete the node with label_id from the tree. """
@@ -236,6 +237,8 @@ class RegulationTree(object):
         """ Replace an existing node in the tree with node. """
 
         parent = self.get_parent(node)
+        if not parent:
+            return
 
         prev_idx = [idx for idx, c in enumerate(parent.children)
                     if c.label == node.label]
@@ -341,7 +344,8 @@ class RegulationTree(object):
         """ Replace just a node's text. """
 
         node = find(self.tree, label)
-        node.text = change['node']['text']
+        if node:
+            node.text = change['node']['text']
 
     def replace_node_title(self, label, change):
         """ Replace just a node's title. """

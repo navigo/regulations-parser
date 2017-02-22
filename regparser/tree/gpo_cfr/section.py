@@ -3,7 +3,6 @@ import re
 
 import pyparsing
 import six
-
 from regparser.citations import remove_citation_overlaps
 from regparser.grammar import unified
 from regparser.grammar.utils import QuickSearchable
@@ -117,6 +116,8 @@ def build_from_section(reg_part, section_xml):
     subject_text = (subject_xml[0].text or '').strip()
 
     section_nums = []
+    if not section_no:
+        return []
     for match in re.finditer(r'{0}\.(\d+[a-z]*)'.format(reg_part), section_no):
         secnum_candidate = match.group(1)
         if secnum_candidate.isdigit():

@@ -68,16 +68,18 @@ def fetch_amendments(notice_xml):
             authority_by_xml[amendment.amdpar_xml] = instruction_xml.text
         elif changes.new_subpart_added(amendment):
             subpart_changes = {}
-            for change in changes.create_subpart_amendment(content.struct):
-                subpart_changes.update(change)
-            notice_changes.add_changes(amendment.amdpar_xml, subpart_changes)
+            if content is not None:
+                for change in changes.create_subpart_amendment(content.struct):
+                    subpart_changes.update(change)
+                notice_changes.add_changes(amendment.amdpar_xml, subpart_changes)
         elif content:
             content.amends.append(amendment)
         else:
             create_xmlless_change(amendment, notice_changes)
 
     for content in cache.by_xml.values():
-        create_xml_changes(content.amends, content.struct, notice_changes)
+        if content.struct:
+            create_xml_changes(content.amends, content.struct, notice_changes)
 
     amendments = []
     for amdpar_xml in notice_xml.xpath('.//AMDPAR'):
