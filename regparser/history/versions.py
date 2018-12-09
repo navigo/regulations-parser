@@ -4,13 +4,9 @@ from datetime import datetime
 
 from regparser.notice.citation import Citation
 
-<<<<<<< HEAD
-class Version(namedtuple('Version', ['identifier', 'published', 'effective', 'volume', 'page'])):
-=======
 
 class Version(namedtuple('Version',
                          ['identifier', 'effective', 'fr_citation'])):
->>>>>>> master
     @property
     def is_final(self):
         return bool(self.effective)
@@ -21,13 +17,8 @@ class Version(namedtuple('Version',
 
     def json(self):
         result = {'identifier': self.identifier,
-<<<<<<< HEAD
-                  'published': self.published.isoformat(),
-                  'volume': self.volume,
-                  'page': self.page}
-=======
+
                   'fr_citation': self.fr_citation.asdict()}
->>>>>>> master
         if self.is_final:
             result['effective'] = self.effective.isoformat()
 
