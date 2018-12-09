@@ -1,4 +1,5 @@
 from regparser import plugins
+import os
 
 META = {}
 
@@ -110,7 +111,7 @@ CUSTOM_CITATIONS = {
 # your own key at
 # http://regulationsgov.github.io/developers/key/
 REGS_GOV_API = 'https://api.data.gov/regulations/v3/'
-REGS_GOV_KEY = 'DEMO_KEY'
+REGS_GOV_KEY = os.environ['REGSGOVKEY']
 
 # These are the host and port for the regparser Django server running the
 # administrative UI.

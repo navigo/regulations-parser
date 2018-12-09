@@ -328,7 +328,14 @@ def _through_paragraph(prev_lab, next_lab):
     """Expand "through" for labels ending in a paragraph."""
     depth = len(prev_lab)
     start = p_levels[depth - 4].index(prev_lab[-1]) + 1
-    end = p_levels[depth - 4].index(next_lab[-1])
+    try:
+        end = p_levels[depth - 4].index(next_lab[-1])
+    except ValueError as e: # Title 21 seems to skip a level
+        try:
+            end = p_levels[depth - 3].index(next_lab[-1])
+        except ValueError as e:  # Title 21 seems to skip a level
+            end = None  # This will fail; for debugging purposes only
+
     return [tokens.Paragraph.make(prev_lab[:depth - 1] +
                                   [p_levels[depth - 4][i]])
             for i in range(start, end)]

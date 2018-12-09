@@ -27,6 +27,15 @@ class Version(namedtuple('Version',
     def from_json(json_str):
         json_dict = json.loads(json_str)
         effective = json_dict.get('effective')
+        if 'fr_citation' not in json_dict:
+            try:
+                json_dict['fr_citation'] = {
+                    'volume': json_dict['volume'],
+                    'page': json_dict['page']
+                }
+            except KeyError as e:
+                pass
+
         if effective:
             effective = datetime.strptime(effective, '%Y-%m-%d').date()
         return Version(json_dict['identifier'], effective,
