@@ -11,7 +11,9 @@ regcontent
 docs/_build
 
 regparser.egg-info/
+interpparser.egg-info/
 
 .eregs_index/
-
-.idea
+/env
+/.idea
+/.cache

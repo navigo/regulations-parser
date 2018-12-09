@@ -5,7 +5,7 @@ from unittest import TestCase
 from regparser.history.versions import Version
 from regparser.layer.meta import Meta
 from regparser.tree.struct import Node
-import settings
+from regparser.web.settings import parser as settings
 
 
 class LayerMetaTest(TestCase):

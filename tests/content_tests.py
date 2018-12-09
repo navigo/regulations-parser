@@ -3,7 +3,7 @@ from unittest import TestCase
 from mock import patch
 
 from regparser import content
-import settings
+from regparser.web.settings import parser as settings
 
 
 class ContentTests(TestCase):

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from copy import deepcopy
 from functools import wraps
 from itertools import chain
@@ -100,19 +102,19 @@ def replace_xpath(xpath):
 
 @replace_xpath(".//E[@T='52' or @T='54']")
 def subscript_to_plaintext(element):
-    return "_{%s}" % element.text
+    return "_{{{0}}}".format(element.text)
 
 
 @replace_xpath(".//E[@T='51' or @T='53']|.//SU[not(@footnote)]")
 def superscript_to_plaintext(element):
-    return "^{%s}" % element.text
+    return "^{{{0}}}".format(element.text)
 
 
 @replace_xpath(".//SU[@footnote]")
 def footnotes_to_plaintext(element):
     footnote = element.attrib['footnote']
     footnote = footnote.replace('(', r'\(').replace(')', r'\)')
-    return u"[^{}]({})".format(element.text, footnote)
+    return u"[^{0}]({1})".format(element.text, footnote)
 
 
 def get_node_text(node, add_spaces=False):

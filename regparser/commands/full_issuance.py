@@ -4,15 +4,15 @@ import click
 
 from regparser.history.versions import Version
 from regparser.index import dependency, entry
-from regparser.tree.xml_parser.reg_text import build_tree
-
+from regparser.tree.gpo_cfr.builder import build_tree
 
 logger = logging.getLogger(__name__)
 
 
 def regtext_for_part(notice_xml, cfr_title, cfr_part):
     """Filter to only the REGTEXT in question"""
-    xpath = './/REGTEXT[@TITLE={} and @PART={}]'.format(cfr_title, cfr_part)
+    xpath = './/REGTEXT[@TITLE="{0}" and @PART="{1}"]'.format(
+        cfr_title, cfr_part)
     matches = notice_xml.xpath(xpath)
     if not matches:
         logger.warning('No matching REGTEXT in this file')
@@ -23,6 +23,8 @@ def regtext_for_part(notice_xml, cfr_title, cfr_part):
 
 
 def process_version_if_needed(cfr_title, cfr_part, version_id):
+    """Creates and writes a version struct after validating the Notice has
+    been created"""
     notice_entry = entry.Notice(version_id)
     version_entry = entry.Version(cfr_title, cfr_part, version_id)
 
@@ -32,19 +34,21 @@ def process_version_if_needed(cfr_title, cfr_part, version_id):
 
     if deps.is_stale(version_entry):
         notice_xml = notice_entry.read()
-        version = Version(
-            identifier=version_id, effective=notice_xml.effective,
-            published=notice_xml.published, volume=notice_xml.fr_volume, page=notice_xml.start_page)
+        version = Version(version_id, notice_xml.effective,
+                          notice_xml.fr_citation)
         version_entry.write(version)
 
 
 def process_tree_if_needed(cfr_title, cfr_part, version_id):
+    """Creates and writes a regulation tree if the appropriate notice
+    exists"""
     notice_entry = entry.Notice(version_id)
     tree_entry = entry.Tree(cfr_title, cfr_part, version_id)
 
     deps = dependency.Graph()
     deps.add(tree_entry, notice_entry)
     deps.validate_for(tree_entry)
+
     if deps.is_stale(tree_entry):
         notice_xml = notice_entry.read()
         tree = build_tree(regtext_for_part(notice_xml, cfr_title, cfr_part))

@@ -1,24 +1,24 @@
 """Functions for processing the xml associated with the Federal Register's
 notices"""
-from collections import namedtuple
-from datetime import date, datetime
 import logging
 import os
+from collections import namedtuple
+from datetime import date, datetime
 
+import requests
 from cached_property import cached_property
 from lxml import etree
-import requests
 from six.moves.urllib.parse import urlparse
-
 
 from regparser import regs_gov
 from regparser.grammar.unified import notice_cfr_p
 from regparser.history.delays import delays_in_sentence
 from regparser.index.http_cache import http_client
-from regparser.notice.amendments import fetch_amendments
+from regparser.notice.amendments.fetch import fetch_amendments
+from regparser.notice.citation import Citation
 from regparser.notice.dates import fetch_dates
 from regparser.tree.xml_parser.xml_wrapper import XMLWrapper
-import settings
+from regparser.web.settings import parser as settings
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class NoticeXML(XMLWrapper):
     def delays(self):
         """Pull out FRDelays found in the DATES tag"""
         dates_str = "".join(p.text for p in self.xpath(
-            "(//DATES/P)|(//EFFDATE/P)"))
+            "(//DATES/P)|(//EFFDATE/P)") if p.text)
         return [delay for sent in dates_str.split('.')
                 for delay in delays_in_sentence(sent)]
 
@@ -83,7 +83,7 @@ class NoticeXML(XMLWrapper):
             value = value.isoformat()
         if value is None:
             value = ''
-        dates_tag.attrib["eregs-{}-date".format(date_type)] = value
+        dates_tag.attrib["eregs-{0}-date".format(date_type)] = value
 
     def derive_rins(self):
         """Extract regulatory id numbers from the XML (in the RINs tag)"""
@@ -193,7 +193,7 @@ class NoticeXML(XMLWrapper):
     def _get_date_attr(self, date_type):
         """Pulls out the date set in `set_date_attr`, as a datetime.date. If
         not present, returns None"""
-        value = self.xpath(".//DATES")[0].get('eregs-{}-date'.format(
+        value = self.xpath(".//DATES")[0].get('eregs-{0}-date'.format(
             date_type))
         if value:
             return datetime.strptime(value, "%Y-%m-%d").date()
@@ -336,11 +336,20 @@ class NoticeXML(XMLWrapper):
 
     @cached_property        # rather expensive operation, so cache results
     def amendments(self):
-        return fetch_amendments(self.xml)
+        """Getter for relevent amendments.
+
+        :rtype: list of amendments
+        """
+        try:
+            amendments = fetch_amendments(self.xml)
+        except:             # noqa
+            logger.error('Unable to fetch amendments for %s', self.version_id)
+            return []
+        return amendments
 
     @property
     def fr_citation(self):
-        return '{} FR {}'.format(self.fr_volume, self.start_page)
+        return Citation(self.fr_volume, self.start_page)
 
     @property
     def title(self):
@@ -398,7 +407,7 @@ class NoticeXML(XMLWrapper):
                   'cfr_title': cfr_ref.title,
                   'dockets': self.docket_ids,
                   'document_number': self.version_id,
-                  'fr_citation': self.fr_citation,
+                  'fr_citation': self.fr_citation.formatted(),
                   'fr_url': self.fr_html_url,
                   'fr_volume': self.fr_volume,
                   # @todo - SxS depends on this; we should remove soon

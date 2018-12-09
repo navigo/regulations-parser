@@ -1,8 +1,16 @@
+import json
 from collections import namedtuple
 from datetime import datetime
-import json
 
+from regparser.notice.citation import Citation
+
+<<<<<<< HEAD
 class Version(namedtuple('Version', ['identifier', 'published', 'effective', 'volume', 'page'])):
+=======
+
+class Version(namedtuple('Version',
+                         ['identifier', 'effective', 'fr_citation'])):
+>>>>>>> master
     @property
     def is_final(self):
         return bool(self.effective)
@@ -13,9 +21,13 @@ class Version(namedtuple('Version', ['identifier', 'published', 'effective', 'vo
 
     def json(self):
         result = {'identifier': self.identifier,
+<<<<<<< HEAD
                   'published': self.published.isoformat(),
                   'volume': self.volume,
                   'page': self.page}
+=======
+                  'fr_citation': self.fr_citation.asdict()}
+>>>>>>> master
         if self.is_final:
             result['effective'] = self.effective.isoformat()
 
@@ -24,25 +36,28 @@ class Version(namedtuple('Version', ['identifier', 'published', 'effective', 'vo
     @staticmethod
     def from_json(json_str):
         json_dict = json.loads(json_str)
-        json_dict['published'] = datetime.strptime(json_dict['published'],
-                                                   '%Y-%m-%d').date()
         effective = json_dict.get('effective')
         if effective:
             effective = datetime.strptime(effective, '%Y-%m-%d').date()
-        json_dict['effective'] = effective
-        return Version(**json_dict)
+        return Version(json_dict['identifier'], effective,
+                       Citation(**json_dict['fr_citation']))
 
     def __lt__(self, other):
         """Linearizing versions requires knowing not only relevant dates and
         identifiers, but also which versions are from final rules and which
         are just proposals"""
         if self.is_final and other.is_final:
+<<<<<<< HEAD
             left = (self.effective, self.volume, self.page)
             right = (other.effective, other.volume, other.page)
+=======
+            left = (self.effective, self.fr_citation, self.identifier)
+            right = (other.effective, other.fr_citation, other.identifier)
+>>>>>>> master
             return left < right
         else:   # at least one of the two is a proposal
-            left = (self.published, self.identifier)
-            right = (other.published, other.identifier)
+            left = (self.fr_citation, self.identifier)
+            right = (other.fr_citation, other.identifier)
             return left < right
 
     @staticmethod

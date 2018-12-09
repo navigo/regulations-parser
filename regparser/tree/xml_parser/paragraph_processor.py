@@ -1,18 +1,19 @@
 import abc
-from collections import OrderedDict
 import logging
+from collections import OrderedDict
 
+import six
 from lxml import etree
 
-from regparser.layer.key_terms import KeyTerms
 from regparser.layer.formatting import table_xml_to_plaintext
-from regparser.tree.depth import heuristics, markers as mtypes
-from regparser.tree.depth.markers import deemphasize
+from regparser.layer.key_terms import KeyTerms
+from regparser.tree.depth import markers as mtypes
+from regparser.tree.depth import heuristics
 from regparser.tree.depth.derive import debug_idx, derive_depths
+from regparser.tree.depth.markers import deemphasize
 from regparser.tree.paragraph import hash_for_paragraph
 from regparser.tree.struct import Node
 from regparser.tree.xml_parser import tree_utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class ParagraphProcessor(object):
                 # len(n.label[-1]) < 6 filters out keyterm nodes
                 p_num = sum(n.is_markerless() and len(n.label[-1]) < 6
                             for n in stack.peek_level(depth)) + 1
-            node.label[-1] = 'p{}'.format(p_num)
+            node.label[-1] = 'p{0}'.format(p_num)
 
     @staticmethod
     def separate_intro(nodes):
@@ -122,11 +123,10 @@ class ParagraphProcessor(object):
         intro_node, nodes = self.separate_intro(nodes)
         if intro_node:
             root.text = " ".join([root.text, intro_node.text]).strip()
-            # @todo - this is ugly. Make tagged_text a legitimate field on Node
             tagged_text_list = []
-            if getattr(root, 'tagged_text', None):
+            if root.tagged_text:
                 tagged_text_list.append(root.tagged_text)
-            if getattr(intro_node, 'tagged_text', None):
+            if intro_node.tagged_text:
                 tagged_text_list.append(intro_node.tagged_text)
             if tagged_text_list:
                 root.tagged_text = ' '.join(tagged_text_list)
@@ -170,10 +170,8 @@ class ParagraphProcessor(object):
         return []
 
 
-class BaseMatcher(object):
+class BaseMatcher(six.with_metaclass(abc.ABCMeta)):
     """Base class defining the interface of various XML node matchers"""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def matches(self, xml):
         """Test the xml element -- does this matcher apply?"""
@@ -268,5 +266,5 @@ class GraphicsMatcher(BaseMatcher):
     def derive_nodes(self, xml, processor=None):
         text = ''
         for gid_xml in xml.xpath('./GID'):
-            text += '![]({})'.format(gid_xml.text)
+            text += '![]({0})'.format(gid_xml.text)
         return [Node(text, label=[mtypes.MARKERLESS])]

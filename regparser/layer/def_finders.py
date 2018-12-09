@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """Parsers for finding a term that's being defined within a node"""
 import abc
+import re
 from collections import namedtuple
 from itertools import chain
-import re
 
-from pyparsing import ParseException
 import six
+from pyparsing import ParseException
 
 from regparser.citations import Label
 from regparser.grammar import terms as grammar
 from regparser.tree.struct import Node
-import settings
+from regparser.web.settings import parser as settings
 
 
 class Ref(namedtuple('Ref', ['term', 'label', 'start'])):
@@ -30,11 +30,9 @@ class Ref(namedtuple('Ref', ['term', 'label', 'start'])):
         return (self.start, self.end)
 
 
-class FinderBase(object):
+class FinderBase(six.with_metaclass(abc.ABCMeta)):
     """Base class for all of the definition finder classes. Defines the
     interface they must implement"""
-    __metaclass__ = abc.ABCMeta
-
     @abc.abstractmethod
     def find(self, node):
         """Given a Node, pull out any definitions it may contain as a list of
@@ -120,7 +118,7 @@ class XMLTermMeans(FinderBase):
 
     def find(self, node):
         refs = []
-        tagged_text = getattr(node, 'tagged_text', '')
+        tagged_text = node.tagged_text
         for match, _, _ in grammar.xml_term_parser.scanString(tagged_text):
             # Position in match reflects XML tags, so its dropped in
             # preference of new values based on node.text.
@@ -178,7 +176,7 @@ class DefinitionKeyterm(object):
 
     def find(self, node):
         if self.title_matches:
-            tagged_text = getattr(node, 'tagged_text', '')
+            tagged_text = node.tagged_text
             try:
                 match = grammar.key_term_parser.parseString(tagged_text)
                 phrase = node.tagged_text[match.term.pos[0]:match.term.pos[1]]

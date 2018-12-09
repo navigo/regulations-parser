@@ -1,7 +1,8 @@
-FROM python:2.7-alpine
+FROM python:3.5-alpine
 
 COPY ["regparser", "/app/src/regparser/"]
-COPY ["settings.py", "eregs.py", "requirements.txt", "setup.py", "manage.py", "/app/src/"]
+COPY ["interpparser", "/app/src/interpparser/"]
+COPY ["requirements.txt", "setup.py", "manage.py", "/app/src/"]
 VOLUME ["/app/cache", "/app/output"]
 
 WORKDIR /app/src/
@@ -14,7 +15,5 @@ ENV PYTHONUNBUFFERED="1" \
     DATABASE_URL="sqlite:////app/cache/db.sqlite" \
     EREGS_CACHE_DIR="/app/cache" \
     EREGS_OUTPUT_DIR="/app/output"
-
-RUN ./manage.py migrate
 
 ENTRYPOINT ["eregs"]

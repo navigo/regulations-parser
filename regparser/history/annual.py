@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-from collections import namedtuple
-from datetime import date
 import logging
 import os
 import re
+from collections import namedtuple
+from datetime import date
 
-from cached_property import cached_property
 import requests
+from cached_property import cached_property
 
 from regparser.index.http_cache import http_client
 from regparser.tree.xml_parser.xml_wrapper import XMLWrapper
-import settings
-
+from regparser.web.settings import parser as settings
 
 CFR_BULK_URL = ("https://www.gpo.gov/fdsys/bulkdata/CFR/{year}/title-{title}/"
                 "CFR-{year}-title{title}-vol{volume}.xml")
