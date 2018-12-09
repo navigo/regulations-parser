@@ -38,13 +38,8 @@ class Version(namedtuple('Version',
         identifiers, but also which versions are from final rules and which
         are just proposals"""
         if self.is_final and other.is_final:
-<<<<<<< HEAD
-            left = (self.effective, self.volume, self.page)
-            right = (other.effective, other.volume, other.page)
-=======
             left = (self.effective, self.fr_citation, self.identifier)
             right = (other.effective, other.fr_citation, other.identifier)
->>>>>>> master
             return left < right
         else:   # at least one of the two is a proposal
             left = (self.fr_citation, self.identifier)
