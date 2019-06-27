@@ -60,6 +60,8 @@ class Terms(Layer):
     def look_for_defs(self, node, stack=None):
         """Check a node and recursively check its children for terms which are
         being defined. Add these definitions to self.scoped_terms."""
+        if node.tagged_text is None:
+            node.tagged_text = '\n          '
         stack = stack or ParentStack()
         stack.add(node.depth(), node)
         if node.node_type in (struct.Node.REGTEXT, struct.Node.SUBPART,
